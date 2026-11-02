@@ -1,12 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { ARCHIPELAGO, cloneArchipelago } from './data/archipelago.data';
 import { App } from './app';
-import {
-  analyzeGraph,
-  GraphDefinition,
-  GraphValidationError,
-  ReplayEvent,
-} from './services/graph-analysis';
+import { AnalysisResult } from './models/analysis.model';
+import {analyzeGraph,} from './services/graph-analysis.services';
+import { GraphValidationError } from './services/graph-validation.services';
+import { GraphDefinition } from './models/graph.model';
+import { ReplayEvent } from './models/replay.model';
 
 describe('low-link graph analysis', () => {
   it('documents the deterministic main archipelago proof', () => {

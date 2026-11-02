@@ -1,4 +1,4 @@
-app-root {
+:host {
   display: block;
   min-height: 100vh;
 }
@@ -139,10 +139,7 @@ h1 em {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.015em;
-  transition:
-    background 140ms ease,
-    border-color 140ms ease,
-    color 140ms ease;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
 .button:focus-visible {
@@ -271,16 +268,15 @@ h1 em {
   background:
     radial-gradient(ellipse at 18% 68%, rgb(212 226 210 / 70%) 0 12%, transparent 31%),
     radial-gradient(ellipse at 74% 27%, rgb(216 230 216 / 67%) 0 14%, transparent 32%),
-    radial-gradient(ellipse at 63% 88%, rgb(225 232 215 / 63%) 0 12%, transparent 28%), #f3f5ec;
+    radial-gradient(ellipse at 63% 88%, rgb(225 232 215 / 63%) 0 12%, transparent 28%),
+    #f3f5ec;
 }
 
 .map-grid {
   position: absolute;
   inset: 0;
   opacity: 0.36;
-  background-image:
-    linear-gradient(#dbe2d5 1px, transparent 1px),
-    linear-gradient(90deg, #dbe2d5 1px, transparent 1px);
+  background-image: linear-gradient(#dbe2d5 1px, transparent 1px), linear-gradient(90deg, #dbe2d5 1px, transparent 1px);
   background-size: 29px 29px;
   mask-image: linear-gradient(120deg, #000 0%, transparent 88%);
 }
@@ -297,10 +293,7 @@ h1 em {
   stroke: #bdc4b8;
   stroke-width: 1;
   stroke-linecap: round;
-  transition:
-    stroke 160ms ease,
-    stroke-width 160ms ease,
-    opacity 160ms ease;
+  transition: stroke 160ms ease, stroke-width 160ms ease, opacity 160ms ease;
 }
 
 .edge-unvisited {
@@ -348,10 +341,7 @@ h1 em {
 
 .island-marker {
   stroke-width: 0.9;
-  transition:
-    fill 150ms ease,
-    stroke 150ms ease,
-    r 150ms ease;
+  transition: fill 150ms ease, stroke 150ms ease, r 150ms ease;
 }
 
 .node-unvisited {
@@ -938,5 +928,44 @@ td:first-child {
   .replay-panel,
   .summary-panel {
     padding: 15px 13px;
+  }
+}
+
+.graph-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #172526;
+  color: white;
+  text-align: center;
+}
+
+.graph-loading-overlay p {
+  margin: 14px 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.graph-loading-overlay small {
+  color: #c4d2d0;
+  font-size: 12px;
+}
+
+.graph-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid #526263;
+  border-top-color: white;
+  border-radius: 50%;
+  animation: graph-spin 0.8s linear infinite;
+}
+
+@keyframes graph-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

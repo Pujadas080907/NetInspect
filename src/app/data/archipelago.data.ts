@@ -1,5 +1,5 @@
 import { Bridge } from '../models/island.model';
-import { GraphDefinition } from '../services/graph-analysis';
+import { GraphDefinition } from '../models/graph.model';
 
 export const ARCHIPELAGO: GraphDefinition = {
   nodes: [

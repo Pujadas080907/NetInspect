@@ -1,46 +1,37 @@
 import { Component, computed, signal } from '@angular/core';
 import { ARCHIPELAGO, cloneArchipelago } from './data/archipelago.data';
-import {
-  AnalysisResult,
-  analyzeGraph,
-  GraphDefinition,
-  GraphValidationError,
-  ReplayEvent,
-} from './services/graph-analysis';
+import { AnalysisResult } from './models/analysis.model';
+import {analyzeGraph,} from './services/graph-analysis.services';
+import { GraphValidationError } from './services/graph-validation.services';
+import { GraphDefinition } from './models/graph.model';
 
-interface NodeReplayState {
-  parent: string | null;
-  discovery: number;
-  low: number;
-  complete: boolean;
-  articulation: boolean;
-}
+import { buildReplayState, NodeReplayState } from './services/replay.services';
 
-interface ReplayState {
-  nodes: Map<string, NodeReplayState>;
-  edges: Map<string, 'tree' | 'non-tree' | 'bridge' | 'safe-cycle'>;
-  completedComponents: number;
-}
+
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [],
   templateUrl: './app.html',
 })
+
 export class App {
+
   readonly graph = signal<GraphDefinition>(cloneArchipelago());
+  readonly isGraphLoading = signal(false);
   readonly analysis = signal<AnalysisResult | null>(null);
   readonly cursor = signal(0);
   readonly errorMessage = signal('');
   readonly events = computed(() => this.analysis()?.events ?? []);
   readonly visibleEvents = computed(() => this.events().slice(0, this.cursor()));
   readonly currentEvent = computed(() => this.visibleEvents().at(-1) ?? null);
-  readonly isComplete = computed(
-    () => this.events().length > 0 && this.cursor() >= this.events().length,
-  );
+  readonly isComplete = computed(() => this.events().length > 0 && this.cursor() >= this.events().length);
   readonly completionPercent = computed(() =>
     this.events().length === 0 ? 0 : Math.round((this.cursor() / this.events().length) * 100),
   );
-  readonly replayState = computed(() => this.buildReplayState(this.visibleEvents()));
+
+  readonly replayState = computed(() => buildReplayState(this.visibleEvents()));
   readonly edgeViews = computed(() => {
     const nodes = new Map(this.graph().nodes.map((node) => [node.id, node]));
     return this.graph().edges.flatMap((edge) => {
@@ -57,9 +48,22 @@ export class App {
     this.loadGraph(ARCHIPELAGO);
   }
 
-  loadMyArchipelago(): void {
+  // loadMyArchipelago(): void {
+  //   this.loadGraph(ARCHIPELAGO);
+  // }
+
+  async loadMyArchipelago(): Promise<void> {
+  if (this.isGraphLoading()) return;
+
+  this.isGraphLoading.set(true);
+
+  try {
+    await new Promise<void>((resolve) => setTimeout(resolve, 700));
     this.loadGraph(ARCHIPELAGO);
+  } finally {
+    this.isGraphLoading.set(false);
   }
+}
 
   loadGraph(graph: GraphDefinition): void {
     this.cursor.set(0);
@@ -110,9 +114,7 @@ export class App {
       state?.complete ? 'node-complete' : '',
       state?.articulation ? 'node-articulation' : '',
       isCurrent ? 'node-current' : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
+    ].filter(Boolean).join(' ');
   }
 
   edgeClass(edgeId: string): string {
@@ -121,55 +123,8 @@ export class App {
       'bridge-line',
       state ? `edge-${state}` : 'edge-unvisited',
       this.currentEvent()?.edgeId === edgeId ? 'edge-current' : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
+    ].filter(Boolean).join(' ');
   }
 
-  private buildReplayState(events: ReplayEvent[]): ReplayState {
-    const nodes = new Map<string, NodeReplayState>();
-    const edges = new Map<string, 'tree' | 'non-tree' | 'bridge' | 'safe-cycle'>();
-    let completedComponents = 0;
 
-    for (const event of events) {
-      if (event.kind === 'discover' && event.nodeId && event.discovery !== undefined) {
-        nodes.set(event.nodeId, {
-          parent: event.parentId ?? null,
-          discovery: event.discovery,
-          low: event.newLow ?? event.discovery,
-          complete: false,
-          articulation: false,
-        });
-      } else if (
-        (event.kind === 'return-from-child' || event.kind === 'back-edge-low') &&
-        event.nodeId &&
-        event.newLow !== undefined
-      ) {
-        const node = nodes.get(event.nodeId);
-        if (node) {
-          node.low = event.newLow;
-        }
-      } else if (event.kind === 'inspect-tree' && event.edgeId) {
-        edges.set(event.edgeId, 'tree');
-      } else if (event.kind === 'inspect-visited' && event.edgeId) {
-        edges.set(event.edgeId, 'non-tree');
-      } else if (event.kind === 'tree-edge-classification' && event.edgeId) {
-        edges.set(event.edgeId, event.isBridge ? 'bridge' : 'safe-cycle');
-      } else if (event.kind === 'articulation-check' && event.nodeId && event.isArticulation) {
-        const node = nodes.get(event.nodeId);
-        if (node) {
-          node.articulation = true;
-        }
-      } else if (event.kind === 'node-complete' && event.nodeId) {
-        const node = nodes.get(event.nodeId);
-        if (node) {
-          node.complete = true;
-        }
-      } else if (event.kind === 'component-complete') {
-        completedComponents += 1;
-      }
-    }
-
-    return { nodes, edges, completedComponents };
-  }
 }

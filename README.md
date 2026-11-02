@@ -15,6 +15,28 @@ Run from `NetInspect_Frontend`:
 - `npm test -- --watch=false` — Vitest tests
 - `npm run build` — production build
 
+## folder structure
+NetInspect_Frontend/
+├── components/
+│   ├── island-map/
+│   ├── graph-controls/
+│   ├── event-panel/
+│   ├── node-table/
+│   └── safety-summary/
+├── services/
+│   ├── graph-analysis.service.ts
+│   ├── graph-validation.service.ts
+│   └── replay.service.ts
+├── models/
+│   ├── island.model.ts
+│   ├── graph.model.ts
+│   └── replay.model.ts
+├── data/
+│   └── archipelago.data.ts
+├── app.ts
+├── app.html
+└── app.css
+
 ## Where things live
 
 - `src/app/data/archipelago.data.ts` — candidate-created graph and clone helper.
@@ -112,3 +134,9 @@ and reset.
 Before finishing a change, run the focused tests and production build. Update
 the README when graph data, validation, event ordering, or user-facing behavior
 changes. Avoid unrelated edits and unnecessary dependencies.
+
+
+## Test case run
+
+- npx ng test --watch=false
+- cd NetInspect_Frontend

@@ -1,0 +1,16 @@
+
+<button
+  class="button button-primary"
+  type="button"
+  (click)="onLoadClick()"
+  [disabled]="isLoading()"
+  [attr.aria-busy]="isLoading()"
+>
+  @if (isLoading()) {
+    <span class="loading-spinner" aria-hidden="true"></span>
+    Loading Archipelago...
+  } @else {
+    <span aria-hidden="true">↻</span>
+    Load My Archipelago
+  }
+</button>

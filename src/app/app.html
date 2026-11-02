@@ -8,13 +8,11 @@
   </header>
 
   <section class="intro">
-    <div class="eyebrow">
-      <span>SAFETY BRIEFING</span><span class="eyebrow-line"></span><span>LOW-LINK INSPECTION</span>
-    </div>
+    <div class="eyebrow"><span>SAFETY BRIEFING</span><span class="eyebrow-line"></span><span>LOW-LINK INSPECTION</span></div>
     <h1>Every crossing.<br /><em>Every connection.</em></h1>
     <p class="intro-copy">
-      Trace the island network one decision at a time. Find the bridges and junctions that could
-      leave a festival area cut off.
+      Trace the island network one decision at a time. Find the bridges and junctions
+      that could leave a festival area cut off.
     </p>
     <div class="controls" aria-label="Inspection controls">
       <button class="button button-primary" type="button" (click)="loadMyArchipelago()">
@@ -23,15 +21,12 @@
       <button class="button button-step" type="button" (click)="step()" [disabled]="isComplete()">
         Step <span aria-hidden="true">→</span>
       </button>
-      <button
-        class="button button-run"
-        type="button"
-        (click)="runToEnd()"
-        [disabled]="isComplete()"
-      >
+      <button class="button button-run" type="button" (click)="runToEnd()" [disabled]="isComplete()">
         Run to End <span aria-hidden="true">↗</span>
       </button>
-      <button class="button button-reset" type="button" (click)="reset()">Reset</button>
+      <button class="button button-reset" type="button" (click)="reset()">
+        Reset
+      </button>
       <span class="control-hint">One step = one recorded event</span>
     </div>
     @if (errorMessage()) {
@@ -46,19 +41,19 @@
           <div class="panel-kicker">01 / ARCHIPELAGO</div>
           <h2>Festival grounds</h2>
         </div>
-        <div class="map-count">
-          {{ graph().nodes.length }} ISLANDS <span>·</span> {{ graph().edges.length }} BRIDGES
-        </div>
+        <div class="map-count">{{ graph().nodes.length }} ISLANDS <span>·</span> {{ graph().edges.length }} BRIDGES</div>
       </div>
 
       <div class="map-frame">
         <div class="map-grid" aria-hidden="true"></div>
-        <svg
-          class="island-map"
-          viewBox="0 0 100 100"
-          role="img"
-          aria-label="Map showing island junctions and footbridges"
-        >
+        @if (isGraphLoading()) {
+        <div class="graph-loading-overlay" role="status">
+        <span class="graph-spinner"></span>
+        <p>Loading Archipelago...</p>
+        <small>Preparing island connections</small>
+        </div>
+    }
+        <svg class="island-map" viewBox="0 0 100 100" role="img" aria-label="Map showing island junctions and footbridges">
           <g class="bridge-lines">
             @for (edge of edgeViews(); track edge.id) {
               <g class="bridge-group">
@@ -73,9 +68,7 @@
                   class="bridge-label"
                   [attr.x]="(edge.source.x + edge.target.x) / 2"
                   [attr.y]="(edge.source.y + edge.target.y) / 2 - 2"
-                >
-                  {{ edge.id }}
-                </text>
+                >{{ edge.id }}</text>
               </g>
             }
           </g>
@@ -86,18 +79,14 @@
                 <text class="node-id" x="0" y="1">{{ node.id }}</text>
                 <text class="island-name" x="0" y="8.5">{{ node.name }}</text>
                 @if (nodeState(node.id)?.articulation) {
-                  <text class="articulation-mark" x="5.5" y="-4.5" aria-label="Articulation point">
-                    !
-                  </text>
+                  <text class="articulation-mark" x="5.5" y="-4.5" aria-label="Articulation point">!</text>
                 }
               </g>
             }
           </g>
         </svg>
         <div class="map-compass" aria-hidden="true"><span>N</span><b>↑</b></div>
-        <div class="map-scale">
-          <span>ARCHIPELAGO / NOT TO SCALE</span><span>● INSPECTION MAP</span>
-        </div>
+        <div class="map-scale"><span>ARCHIPELAGO / NOT TO SCALE</span><span>● INSPECTION MAP</span></div>
       </div>
 
       <div class="legend" aria-label="Map legend">
@@ -139,13 +128,8 @@
               </div>
             }
           } @else {
-            <div class="event-meta">
-              <span class="event-kind">READY</span><span>NO EVENTS PLAYED</span>
-            </div>
-            <p>
-              Step through each inspection decision, or run the full review. Load My Archipelago
-              restores the original map.
-            </p>
+            <div class="event-meta"><span class="event-kind">READY</span><span>NO EVENTS PLAYED</span></div>
+            <p>Load the archipelago to begin. Step through each inspection decision, or run the full review.</p>
           }
         </div>
 
@@ -157,9 +141,7 @@
           <div class="progress-track"><span [style.width.%]="completionPercent()"></span></div>
         </div>
 
-        <div class="history-heading">
-          <span>EVENT HISTORY</span><span>{{ visibleEvents().length }} SHOWN</span>
-        </div>
+        <div class="history-heading"><span>EVENT HISTORY</span><span>{{ visibleEvents().length }} SHOWN</span></div>
         <ol class="event-history" aria-label="Recorded inspection events">
           @for (event of visibleEvents(); track event.sequence) {
             <li [class.history-current]="event.sequence === cursor()">
@@ -179,34 +161,18 @@
             <div class="panel-kicker">03 / PROOF &amp; FINDINGS</div>
             <h2>Low-link values</h2>
           </div>
-          <span class="component-count"
-            ><b>{{ replayState().completedComponents }}</b> COMPONENT{{
-              replayState().completedComponents === 1 ? '' : 'S'
-            }}</span
-          >
+          <span class="component-count"><b>{{ replayState().completedComponents }}</b> COMPONENT{{ replayState().completedComponents === 1 ? '' : 'S' }}</span>
         </div>
 
         <div class="table-wrap">
           <table>
             <thead>
-              <tr>
-                <th>ISLAND</th>
-                <th>PARENT</th>
-                <th>DISC</th>
-                <th>LOW</th>
-              </tr>
+              <tr><th>ISLAND</th><th>PARENT</th><th>DISC</th><th>LOW</th></tr>
             </thead>
             <tbody>
               @for (node of sortedNodes(); track node.id) {
-                <tr
-                  [class.row-current]="
-                    node.id === currentEvent()?.nodeId || node.id === currentEvent()?.childId
-                  "
-                >
-                  <td>
-                    <span class="table-island">{{ node.id }}</span
-                    >{{ node.name }}
-                  </td>
+                <tr [class.row-current]="node.id === currentEvent()?.nodeId || node.id === currentEvent()?.childId">
+                  <td><span class="table-island">{{ node.id }}</span>{{ node.name }}</td>
                   <td>{{ nodeState(node.id)?.parent ?? '—' }}</td>
                   <td>{{ nodeState(node.id)?.discovery ?? '—' }}</td>
                   <td class="low-cell">{{ nodeState(node.id)?.low ?? '—' }}</td>
@@ -218,33 +184,19 @@
 
         @if (isComplete() && analysis(); as result) {
           <div class="safety-results" aria-live="polite">
-            <div class="result-heading">
-              <span class="result-status"></span> SAFETY REVIEW COMPLETE
-            </div>
+            <div class="result-heading"><span class="result-status"></span> SAFETY REVIEW COMPLETE</div>
             <div class="result-group">
-              <span class="result-label"
-                >CRITICAL BRIDGES <small>({{ result.bridgeIds.length }})</small></span
-              >
+              <span class="result-label">CRITICAL BRIDGES <small>({{ result.bridgeIds.length }})</small></span>
               <div class="result-chips">
-                @for (id of result.bridgeIds; track id) {
-                  <span class="chip chip-bridge">{{ id }}</span>
-                }
-                @if (result.bridgeIds.length === 0) {
-                  <span class="no-findings">None — every crossing has an alternate route.</span>
-                }
+                @for (id of result.bridgeIds; track id) { <span class="chip chip-bridge">{{ id }}</span> }
+                @if (result.bridgeIds.length === 0) { <span class="no-findings">None — every crossing has an alternate route.</span> }
               </div>
             </div>
             <div class="result-group">
-              <span class="result-label"
-                >ARTICULATION ISLANDS <small>({{ result.articulationIds.length }})</small></span
-              >
+              <span class="result-label">ARTICULATION ISLANDS <small>({{ result.articulationIds.length }})</small></span>
               <div class="result-chips">
-                @for (id of result.articulationIds; track id) {
-                  <span class="chip chip-articulation">{{ id }}</span>
-                }
-                @if (result.articulationIds.length === 0) {
-                  <span class="no-findings">None — no single island splits this network.</span>
-                }
+                @for (id of result.articulationIds; track id) { <span class="chip chip-articulation">{{ id }}</span> }
+                @if (result.articulationIds.length === 0) { <span class="no-findings">None — no single island splits this network.</span> }
               </div>
             </div>
           </div>
