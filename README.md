@@ -1,101 +1,114 @@
-# Treasure-Island Bridge Safety Map
+# Agent Guide — Treasure-Island Bridge Safety Map
 
-An offline-first Angular application for replaying deterministic low-link DFS
-over an undirected festival bridge network. The map is presentation-only; the
-analysis engine validates and calculates from node and edge IDs.
+Keep this guide aligned with the implementation. Prefer focused changes that
+preserve the existing Angular structure and deterministic graph behavior.
 
-## Run and verify
+## Project
 
-```bash
-npm install
-npm start
-npm test
-npm run build
-```
+A local Angular application that visualizes an undirected island-and-bridge
+graph and replays low-link DFS. No backend, database, account, external map
+service, or live bridge data is needed.
 
-The app starts with the candidate-created archipelago. Use **Step** to reveal
-one event, **Run to End** to finish the same event sequence, and **Reset** to
-restore the original graph and pre-traversal state.
+Run from `NetInspect_Frontend`:
 
-## Candidate graph and independently documented result
+- `npm start` — local development server
+- `npm test -- --watch=false` — Vitest tests
+- `npm run build` — production build
 
-The seven islands are Adventure Bay (A), Treasure Cove (B), Festival Harbor
-(C), Lantern Island (D), Music Island (E), Sunset Beach (F), and First Aid
-Island (G). It has eight undirected bridges: AB, AC, BC, CD, DE, EF, FD, EG.
-Coordinates affect only the SVG layout.
+## Where things live
 
-| Island ID | Sorted neighbours |
-| --------- | ----------------- |
-| A         | B, C              |
-| B         | A, C              |
-| C         | A, B, D           |
-| D         | C, E, F           |
-| E         | D, F, G           |
-| F         | D, E              |
-| G         | E                 |
+- `src/app/data/archipelago.data.ts` — candidate-created graph and clone helper.
+- `src/app/models/island.model.ts` — island and bridge types.
+- `src/app/services/graph-analysis.ts` — graph validation, deterministic
+  adjacency, low-link DFS, results, and replay events. Keep it independent of
+  Angular and presentation.
+- `src/app/app.ts` — owns graph, analysis, replay cursor, and derived display
+  state; implements Load, Step, Run to End, and Reset.
+- `src/app/app.html` — map, replay, proof table, controls, and findings.
+- `src/app/app.css` and `src/styles.css` — application presentation.
+- `src/app/app.spec.ts` — algorithm and replay tests.
+- `README.md` — run instructions, event contract, candidate graph oracle, and
+  design notes.
 
-| Discovery order | Parent | Discovery | Low |
-| --------------- | -----: | --------: | --: |
-| A               |      — |         0 |   0 |
-| B               |      A |         1 |   0 |
-| C               |      B |         2 |   0 |
-| D               |      C |         3 |   3 |
-| E               |      D |         4 |   3 |
-| F               |      E |         5 |   3 |
-| G               |      E |         6 |   6 |
+Do not add duplicate components or layers just to match a generic example.
+The UI must display engine results, not implement another graph algorithm.
 
-- Components: **1**
-- Critical bridges (ASCII-sorted IDs): **CD, EG**
-- Articulation islands (ASCII-sorted IDs): **C, D, E**
+## Graph and analysis rules
 
-These are a hand-derived test oracle, not application input. Tests compare the
-engine's independently produced output to this result.
+- IDs match `[A-Z][A-Z0-9_-]{0,15}`. Nodes have a non-empty name and finite
+  `x`/`y` coordinates in `[0, 100]`.
+- Support 1–12 nodes and at most 20 undirected edges. Edge IDs must be unique;
+  endpoints must exist and differ; duplicate unordered connections are invalid.
+- Validate the complete graph before analysis. Invalid input clears stale
+  analysis and replay and shows a useful error.
+- Coordinates affect the map only. Sort roots and each adjacency list by
+  ascending ASCII node ID. Use one zero-based discovery clock across components.
+- For visited non-parent neighbors, update low using their discovery value.
+  Classify bridges with `low[child] > discovery[parent]`, non-root articulation
+  points with `low[child] >= discovery[node]`, and roots by DFS-tree child count.
+- Sort final bridge and articulation IDs in ascending ASCII order.
 
-## Replay event contract
+## Replay and UI behavior
 
-The event record contains a one-based sequence number, kind, explanation, and
-the relevant node, child, edge, low-value, or classification fields. An
-undirected edge is inspected at each endpoint's sorted adjacency visit:
+The engine records the complete event sequence once. The replay cursor reveals
+events in order; it must not rerun DFS. Step advances one event. Run to End
+selects the final event. Reset and Load My Archipelago restore the bundled
+graph and pre-traversal view.
 
-1. A tree edge is recorded before recursion; its child is then discovered.
-2. A completed child returns to its parent and records old/new parent low.
-3. The tree edge is classified with `low[child] > discovery[parent]`.
-4. For a non-root parent, an articulation check records
-   `low[child] >= discovery[parent]`.
-5. A visited non-parent connection is inspected, then its old/new low is
-   recorded (even when the value stays the same). Parent-edge inspections do
-   not lower low.
-6. After all neighbours, a root gets its child-count articulation check, then
-   the node completes. After a root completes, the component-complete event is
-   emitted.
+The UI derives map styles, table values, component count, and event explanation
+from the selected event history. Keep the final critical-item summary hidden
+until replay completes. Use labels, symbols, or line styles as well as color.
 
-The replay view applies only events through the current cursor. Thus the
-current event, map styles, proof table, component count, and final findings all
-advance from one recorded sequence. Final findings are withheld until replay
-completion, while the full history remains visible after **Run to End**.
+Current event vocabulary and ordering:
 
-## Design and AI prompting notes
+1. `discover` records discovery and initial low.
+2. `inspect-tree` is emitted before recursively visiting a new child.
+3. After the child completes: `return-from-child`, `tree-edge-classification`,
+   then the non-root `articulation-check`.
+4. `inspect-parent` records the parent edge without lowering low.
+5. `inspect-visited` is followed by `back-edge-low`, including when low stays
+   unchanged.
+6. After all neighbors: root `articulation-check` where applicable, then
+   `node-complete`; after each root, `component-complete`.
 
-Implementation checkpoints:
+An undirected edge is encountered from both adjacency entries. Keep that
+policy and event order deterministic, and update the README and tests if they
+change.
 
-1. Inspect the Angular workspace and establish the existing graph data and test
-   setup.
-2. Build a framework-independent validator and deterministic low-link engine.
-3. Connect the engine's recorded events to an SVG map, proof table, controls,
-   and final safety summary.
-4. Verify traversal invariants, validation failures, replay ordering, and reset
-   with focused Vitest tests and a production build.
+## Candidate graph oracle
 
-Relevant prompt used: “Implement the Treasure-Island Bridge Safety Map
-specification in this Angular workspace. Keep graph analysis deterministic and
-independent of layout, validate the entire graph before traversal, make replay
-events explain low-link and critical-item decisions, and add focused tests for
-the required graph, validation, ordering, and reset cases.”
+The bundled graph has islands A–G and bridges AB, AC, BC, CD, DE, EF, FD, EG.
 
-The implementation keeps the existing Angular stack, uses a pure TypeScript
-analysis module with typed event records, and draws the map with inline SVG.
-This avoids map services and runtime data dependencies. Recursive DFS was
-chosen because the graph is bounded at 12 nodes and it directly represents the
-required child-return order. A replay cursor folds the recorded events to keep
-all visible proof state synchronized instead of running a second visual
-algorithm.
+Sorted adjacency:
+- A: B, C
+- B: A, C
+- C: A, B, D
+- D: C, E, F
+- E: D, F, G
+- F: D, E
+- G: E
+
+Discovery order: A, B, C, D, E, F, G.  
+Parent / discovery / low:
+- A: null / 0 / 0
+- B: A / 1 / 0
+- C: B / 2 / 0
+- D: C / 3 / 3
+- E: D / 4 / 3
+- F: E / 5 / 3
+- G: E / 6 / 6
+
+Components: 1. Bridges: CD, EG. Articulation islands: C, D, E.
+These values are a test oracle only; never use them to drive application
+decisions.
+
+## Tests and change checklist
+
+Keep tests for shuffled input order, cycle-only graphs, disconnected and
+isolated nodes, back-connection low propagation, bridge and articulation
+inequalities, root child counts, validation failures, event ordering, replay,
+and reset.
+
+Before finishing a change, run the focused tests and production build. Update
+the README when graph data, validation, event ordering, or user-facing behavior
+changes. Avoid unrelated edits and unnecessary dependencies.
