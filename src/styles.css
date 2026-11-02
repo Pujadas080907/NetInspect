@@ -1,0 +1,32 @@
+:root {
+  color-scheme: light;
+  --font-sans: 'DM Sans', 'Segoe UI', sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono: 'DM Mono', Consolas, monospace;
+  font-family: var(--font-sans);
+  color: #35413a;
+  background: #f6f5f0;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button {
+  font: inherit;
+}
+
+::selection {
+  color: #fff;
+  background: #536e5b;
+}
